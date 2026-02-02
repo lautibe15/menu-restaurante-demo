@@ -1,11 +1,7 @@
 :root { --radius: 14px; }
 * { box-sizing: border-box; }
-body {
-  margin: 0;
-  font-family: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-  background:#fafafa;
-  color:#111;
-}
+body { font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+.title, .card-title, h1, h2 { font-family: "Montserrat", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
 .container { max-width: 980px; margin: 0 auto; padding: 16px; }
 .title { margin: 10px 0 14px; font-size: 22px; }
 
