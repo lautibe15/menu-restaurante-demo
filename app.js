@@ -3,7 +3,7 @@ const CONFIG = {
   restaurantName: "Restaurante Demo",
   currencySymbol: "$",
   whatsappPhone: "5493517520425", // <-- cambialo
-  logoSrc: "https://via.placeholder.com/220x80?text=LOGO"
+  logoSrc: "assets/logo.png"
 };
 
 // Pegá acá TU link CSV publicado (de Sheets "Publicar en la web" formato CSV)
