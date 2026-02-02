@@ -49,3 +49,15 @@ body { font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial
 .cart-sub{ color:#444; font-size: 13px; }
 .qty{ display:flex; gap:8px; align-items:center; }
 .qty button{ width:38px; }
+.item-body{ padding: 12px 14px; display:flex; flex-direction:column; gap:12px; }
+.item-img{ width:100%; max-height:260px; object-fit:cover; border-radius: 14px; background:#f0f0f0; }
+.item-desc{ margin:0; color:#444; }
+
+.variant-list{ display:flex; flex-direction:column; gap:10px; }
+.variant-option{
+  border:1px solid #eee; border-radius: 14px; padding: 10px 12px;
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+}
+.variant-left{ display:flex; align-items:center; gap:10px; }
+.variant-name{ font-weight: 600; }
+.variant-price{ font-weight: 700; }
