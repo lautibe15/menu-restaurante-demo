@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Menú</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <img id="logo" class="logo" alt="Logo del restaurante" />
+    <button id="btnCart" class="btn btn-primary">
+      Ver mi orden <span id="cartCount" class="pill">0</span>
+    </button>
+  </header>
+
+  <main class="container">
+    <h1 id="restaurantName" class="title"></h1>
+    <nav id="categoryBar" class="categories"></nav>
+    <section id="itemsGrid" class="grid"></section>
+  </main>
+
+  <div id="cartModal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>Tu orden</h2>
+        <button id="btnCloseCart" class="btn btn-ghost">Cerrar</button>
+      </div>
+
+      <div id="cartList" class="cart-list"></div>
+
+      <div class="modal-footer">
+        <div class="total">Total: <strong id="cartTotal"></strong></div>
+        <div class="modal-actions">
+          <button id="btnClear" class="btn btn-ghost">Vaciar</button>
+          <a id="btnWhatsApp" class="btn btn-whatsapp" href="#" target="_blank" rel="noreferrer">
+            Enviar por WhatsApp
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
