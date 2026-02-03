@@ -11,14 +11,15 @@
 </head>
 <body>
   <header class="topbar">
-    <img id="logo" class="logo" alt="Logo del restaurante" />
-    <button id="btnCart" class="btn btn-primary">
-      Ver mi orden <span id="cartCount" class="pill">0</span>
-    </button>
-  </header>
+  <img id="logo" class="logo" alt="Logo del restaurante" />
+  <div id="restaurantNameTop" class="name"></div>
+
+  <button id="btnCart" class="btn btn-primary">
+    Ver mi orden <span id="cartCount" class="pill">0</span>
+  </button>
+</header>
 
   <main class="container">
-    <h1 id="restaurantName" class="title"></h1>
     <nav id="categoryBar" class="categories"></nav>
     <section id="itemsGrid" class="grid"></section>
   </main>
@@ -100,10 +101,12 @@
 
     </div>
   </div>
-  <script src="app.js"></script>
- <button id="btnCartFloating" class="cart-floating hidden">
+<button id="btnCartFloating" class="cart-floating hidden">
   VER MI ORDEN <span id="cartCountFloating" class="count">0</span>
 </button>
+  
+  <script src="app.js"></script>
+
  
 </body>
 </html>
