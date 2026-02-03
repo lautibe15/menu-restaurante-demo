@@ -211,4 +211,45 @@ body.modal-open #btnCartFloating{
   color: #7a1f1f;
   font-size: 14px;
 }
+.searchbar{
+  position: sticky;
+  top: 0;              /* queda pegado dentro del main */
+  z-index: 5;
+  background: #fff;
+  padding: 10px 0 8px;
+}
+
+.searchbar input{
+  width: 100%;
+  border: 1px solid #e7e7e7;
+  border-radius: 14px;
+  padding: 12px 44px 12px 14px;
+  font-size: 14px;
+  outline: none;
+}
+
+.searchbar input:focus{
+  border-color: #111;
+}
+
+.search-clear{
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  border: 1px solid #e7e7e7;
+  background: #fff;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.search-meta{
+  margin: 0 0 10px;
+  color: #444;
+  font-size: 13px;
+}
 
