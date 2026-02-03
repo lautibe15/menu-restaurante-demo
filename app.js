@@ -57,6 +57,13 @@ let modalQty = 1;
 
 let modalItem = null;
 let modalVariantKey = "default";
+let modalQty = 1;
+let modalUnitPrice = 0;
+
+function updateItemModalPrice() {
+  elItemPrice.textContent = money(modalUnitPrice * modalQty);
+}
+
 
 
 // ====== Helpers ======
@@ -262,21 +269,29 @@ function openItemModal(it) {
 
   // cantidad inicial
   modalQty = 1;
+elItemQty.textContent = "1";
+elBtnItemMinus.disabled = true;
+
+modalUnitPrice = firstVariant.price; // o it.price si no hay variantes
+updateItemModalPrice();
+
+
+
+ elBtnItemPlus.onclick = () => {
+  modalQty += 1;
   elItemQty.textContent = String(modalQty);
-  elBtnItemMinus.disabled = true;
+  elBtnItemMinus.disabled = (modalQty <= 1);
+  updateItemModalPrice();
+};
 
-  elBtnItemPlus.onclick = () => {
-    modalQty += 1;
-    elItemQty.textContent = String(modalQty);
-    elBtnItemMinus.disabled = (modalQty <= 1);
-  };
+elBtnItemMinus.onclick = () => {
+  if (modalQty <= 1) return;
+  modalQty -= 1;
+  elItemQty.textContent = String(modalQty);
+  elBtnItemMinus.disabled = (modalQty <= 1);
+  updateItemModalPrice();
+};
 
-  elBtnItemMinus.onclick = () => {
-    if (modalQty <= 1) return;
-    modalQty -= 1;
-    elItemQty.textContent = String(modalQty);
-    elBtnItemMinus.disabled = (modalQty <= 1);
-  };
 
   // setup base del modal
   elItemTitle.textContent = it.name;
@@ -309,10 +324,12 @@ function openItemModal(it) {
         <div class="variant-price">${money(v.price)}</div>
       `;
 
-      row.querySelector("input").onchange = () => {
-        modalVariantKey = v.key;
-        elItemPrice.textContent = money(v.price);
-      };
+     row.querySelector("input").onchange = () => {
+  modalVariantKey = v.key;
+  modalUnitPrice = v.price;
+  updateItemModalPrice();
+};
+
 
       elVariantList.appendChild(row);
     });
@@ -324,10 +341,11 @@ function openItemModal(it) {
   elBtnAddItem.textContent = soldOut ? "Agotado" : "Añadir al pedido";
 
   elBtnAddItem.onclick = () => {
-    if (soldOut) return;
-    addToCart(it.id, modalVariantKey, modalQty);
-    closeItemModal();
-  };
+  if (soldOut) return;
+  addToCart(it.id, modalVariantKey, modalQty);
+  closeItemModal();
+};
+
 
   elItemModal.classList.remove("hidden");
 }
