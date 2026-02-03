@@ -54,14 +54,17 @@
 </div>
 
       <div class="modal-footer">
-        <div class="total">Total: <strong id="cartTotal"></strong></div>
-        <div class="modal-actions">
-          <button id="btnClear" class="btn btn-ghost">Vaciar</button>
-          <a id="btnWhatsApp" class="btn btn-whatsapp" href="#" target="_blank" rel="noreferrer">
-            Enviar por WhatsApp
-          </a>
-        </div>
-      </div>
+  <div class="total">Precio: <strong id="itemPrice"></strong></div>
+
+  <div class="item-qty">
+    <button id="btnItemMinus" class="btn" aria-label="Restar">−</button>
+    <strong id="itemQty">1</strong>
+    <button id="btnItemPlus" class="btn" aria-label="Sumar">+</button>
+  </div>
+
+  <button id="btnAddItem" class="btn btn-primary">Añadir al pedido</button>
+</div>
+
     </div>
   </div>
   
