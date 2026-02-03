@@ -5,7 +5,14 @@ const CONFIG = {
   whatsappPhone: "5493517520425", // <-- cambialo
   logoSrc: "assets/logo.png"
 };
-
+// Horario de pedidos (24h)
+  orderingHours: {
+    enabled: true,
+    tzOffsetMinutes: null, // null = usar hora del dispositivo. Ej: -180 para Argentina (GMT-3)
+    start: "11:00",
+    end: "23:00"
+  }
+};
 // Pegá acá TU link CSV publicado (de Sheets "Publicar en la web" formato CSV)
 const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQEcrYDznig15_wyrQH2pRP8hqpL3Oh50qZUMkeycGX3EImOX0oQXUabcbjdjHcZhk1bWFvoQ_fIiIZ/pub?gid=0&single=true&output=csv";
 
@@ -143,6 +150,38 @@ function isInDateWindow(it) {
   if (from && t < from) return false;
   if (to && t > to) return false;
   return true;
+}
+function parseHHMM(s) {
+  const [h, m] = String(s).split(":").map(Number);
+  return (h * 60) + (m || 0);
+}
+
+function nowMinutes(tzOffsetMinutes = null) {
+  const d = new Date();
+  if (tzOffsetMinutes === null) return d.getHours() * 60 + d.getMinutes();
+
+  // Convertir "ahora" a la zona horaria fija indicada
+  const utc = d.getTime() + d.getTimezoneOffset() * 60000;
+  const local = new Date(utc + tzOffsetMinutes * 60000);
+  return local.getHours() * 60 + local.getMinutes();
+}
+
+function isWithinWindow(start, end, current) {
+  // ventana normal: start < end (ej 11:00-23:00)
+  if (start < end) return current >= start && current < end;
+  // ventana que cruza medianoche (ej 20:00-02:00)
+  return current >= start || current < end;
+}
+
+function isOrderingOpen() {
+  const oh = CONFIG.orderingHours;
+  if (!oh?.enabled) return true;
+
+  const start = parseHHMM(oh.start);
+  const end = parseHHMM(oh.end);
+  const cur = nowMinutes(oh.tzOffsetMinutes);
+
+  return isWithinWindow(start, end, cur);
 }
 
 // ====== CSV parse (soporta comillas) ======
