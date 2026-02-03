@@ -370,6 +370,7 @@ async function init() {
   renderItems();
   updateTop();
 
+  // carrito
   elBtnCart.onclick = openCart;
   elClose.onclick = closeCart;
   elModal.addEventListener("click", (e) => { if (e.target === elModal) closeCart(); });
@@ -380,55 +381,10 @@ async function init() {
     renderCart();
     updateTop();
   };
-}
-function openItemModal(it) {
-  modalItem = it;
-  const firstVariant = (it.variants && it.variants.length) ? it.variants[0] : { key:"default", name:"", price: it.price };
-  modalVariantKey = firstVariant.key;
 
-  elItemTitle.textContent = it.name;
-  elItemDesc.textContent = it.desc || "";
-  elItemImg.src = it.imgUrl || "";
-  elItemImg.alt = it.name;
-
-  // armar radios de variantes
-  elVariantList.innerHTML = "";
-  it.variants.forEach(v => {
-    const row = document.createElement("label");
-    row.className = "variant-option";
-    row.innerHTML = `
-      <div class="variant-left">
-        <input type="radio" name="variant" value="${v.key}" ${v.key === modalVariantKey ? "checked" : ""}/>
-        <span class="variant-name">${v.name || "Opción"}</span>
-      </div>
-      <div class="variant-price">${money(v.price)}</div>
-    `;
-    row.querySelector("input").onchange = () => {
-      modalVariantKey = v.key;
-      elItemPrice.textContent = money(v.price);
-    };
-    elVariantList.appendChild(row);
-  });
-
-  elItemPrice.textContent = money(firstVariant.price);
-
-  // botón añadir
-  elBtnAddItem.disabled = (it.soldOut === true);
-  elBtnAddItem.textContent = (it.soldOut === true) ? "Agotado" : "Añadir al pedido";
-  elBtnAddItem.onclick = () => {
-    if (it.soldOut === true) return;
-    addToCart(it.id, modalVariantKey);
-    closeItemModal();
-  };
-
-  elItemModal.classList.remove("hidden");
+  // ✅ modal de item (detalle/variantes)
+  elCloseItem.onclick = closeItemModal;
+  elItemModal.addEventListener("click", (e) => { if (e.target === elItemModal) closeItemModal(); });
 }
 
-function closeItemModal() {
-  elItemModal.classList.add("hidden");
-  modalItem = null;
-}
-
-init(elCloseItem.onclick = closeItemModal;
-elItemModal.addEventListener("click", (e) => { if (e.target === elItemModal) closeItemModal(); });
-);
+init();
