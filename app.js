@@ -360,17 +360,11 @@ function renderCart() {
     elCartList.innerHTML = `<p>Tu carrito está vacío.</p>`;
   } else {
     entries.forEach(([key, qty]) => {
-      // key = "pz-1__v1" por ejemplo
       const { itemId, variantKey } = parseCartKey(key);
-
-      // buscar el item original
       const it = DATA.items.find(x => x.id === itemId);
       if (!it) return;
 
-      // buscar la variante elegida
       const v = getVariant(it, variantKey);
-
-      // etiqueta de variante para mostrar
       const variantLabel = v.name ? ` (${v.name})` : "";
 
       const row = document.createElement("div");
@@ -387,11 +381,8 @@ function renderCart() {
         </div>
       `;
 
-      const buttons = row.querySelectorAll("button");
-      const btnMinus = buttons[0];
-      const btnPlus = buttons[1];
+      const [btnMinus, btnPlus] = row.querySelectorAll("button");
 
-      // + y - ahora trabajan con "key", no con "id"
       btnPlus.onclick = () => {
         cart[key] = qty + 1;
         saveCart(cart);
@@ -412,29 +403,27 @@ function renderCart() {
     });
   }
 
- // Mostrar/ocultar address
-if (deliveryMode === "delivery") {
-  elDeliveryAddressWrap.classList.remove("hidden");
-  elDeliveryAddress.value = deliveryAddress;
-} else {
-  elDeliveryAddressWrap.classList.add("hidden");
+  // Mostrar/ocultar address
+  if (deliveryMode === "delivery") {
+    elDeliveryAddressWrap.classList.remove("hidden");
+    elDeliveryAddress.value = deliveryAddress;
+  } else {
+    elDeliveryAddressWrap.classList.add("hidden");
+  }
+
+  // Total con envío
+  elCartTotal.textContent = money(orderTotal(cart));
+  elBtnWA.href = buildWhatsAppLink();
+
+  // Validación: si es delivery, exigir dirección
+  const needsAddress = (deliveryMode === "delivery");
+  const hasAddress = (deliveryAddress || "").trim().length > 5;
+  const canSend = entries.length > 0 && (!needsAddress || hasAddress);
+
+  elBtnWA.style.pointerEvents = canSend ? "auto" : "none";
+  elBtnWA.style.opacity = canSend ? "1" : "0.5";
 }
 
-// Total con envío
-elCartTotal.textContent = money(orderTotal(cart));
-elBtnWA.href = buildWhatsAppLink();
-
-// Si es delivery y no hay dirección, deshabilito WhatsApp
-const needsAddress = (deliveryMode === "delivery");
-const hasAddress = deliveryAddress.trim().length > 5;
-const canSend = entries.length > 0 && (!needsAddress || hasAddress);
-
-elBtnWA.style.pointerEvents = canSend ? "auto" : "none";
-elBtnWA.style.opacity = canSend ? "1" : "0.5";
-
-  elBtnWA.style.pointerEvents = entries.length === 0 ? "none" : "auto";
-  elBtnWA.style.opacity = entries.length === 0 ? "0.5" : "1";
-}
 
 
 function buildWhatsAppLink() {
@@ -442,7 +431,6 @@ function buildWhatsAppLink() {
   lines.push(`Hola! Quiero hacer este pedido en ${CONFIG.restaurantName}:`);
   lines.push("");
 
-  // Carrito con variantes: key = "pz-1__v2"
   Object.entries(cart).forEach(([key, qty]) => {
     const { itemId, variantKey } = parseCartKey(key);
     const it = DATA.items.find(x => x.id === itemId);
@@ -454,45 +442,18 @@ function buildWhatsAppLink() {
   });
 
   lines.push("");
+  lines.push("Opciones de entrega:");
 
-  // Si todavía no agregaste la parte de delivery, podés borrar este bloque.
-  if (typeof deliveryMode !== "undefined") {
-    lines.push("Opciones de entrega:");
-    if (deliveryMode === "delivery") {
-      lines.push("• Envío a domicilio");
-      lines.push(`• Dirección: ${(deliveryAddress || "").trim() || "(sin dirección)"}`);
-      if (typeof DELIVERY_FEE !== "undefined") {
-        lines.push(`• Costo de envío: ${money(DELIVERY_FEE)}`);
-      }
-    } else {
-      lines.push("• Retiro en el local");
-    }
-    lines.push("");
+  if (deliveryMode === "delivery") {
+    lines.push("• Envío a domicilio");
+    lines.push(`• Dirección: ${(deliveryAddress || "").trim() || "(sin dirección)"}`);
+    lines.push(`• Costo de envío: ${money(DELIVERY_FEE)}`);
+  } else {
+    lines.push("• Retiro en el local");
   }
 
-  // Total (usa tu función existente; si no existe orderTotal, usa cartTotal)
-  const totalFinal = (typeof orderTotal === "function") ? orderTotal(cart) : cartTotal(cart);
-  lines.push(`Total: ${money(totalFinal)}`);
-
-  const text = encodeURIComponent(lines.join("\n"));
-  return `https://wa.me/${CONFIG.whatsappPhone}?text=${text}`;
-}
-
-
-// Total con envío
-elCartTotal.textContent = money(orderTotal(cart));
-elBtnWA.href = buildWhatsAppLink();
-
-// Si es delivery y no hay dirección, deshabilito WhatsApp
-const needsAddress = (deliveryMode === "delivery");
-const hasAddress = deliveryAddress.trim().length > 5;
-const canSend = entries.length > 0 && (!needsAddress || hasAddress);
-
-elBtnWA.style.pointerEvents = canSend ? "auto" : "none";
-elBtnWA.style.opacity = canSend ? "1" : "0.5";
-
   lines.push("");
-lines.push(`Total: ${money(orderTotal(cart))}`);
+  lines.push(`Total: ${money(orderTotal(cart))}`);
 
   const text = encodeURIComponent(lines.join("\n"));
   return `https://wa.me/${CONFIG.whatsappPhone}?text=${text}`;
