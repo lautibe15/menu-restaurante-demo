@@ -498,9 +498,11 @@ function renderItems() {
   elGrid.innerHTML = "";
 
   const q = normText(searchQuery.trim());
+  const isSearching = q.length > 0;
+
 
   let items = DATA.items
-    .filter(i => !searchQuery.trim() ? (i.category === currentCategory) : true)
+    .filter(i => isSearching ? true : (i.category === currentCategory))
     .filter(i => i.visible !== false)
     .filter(isInDateWindow)
     .filter(i => {
