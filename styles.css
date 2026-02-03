@@ -202,4 +202,13 @@ body.modal-open #btnCartFloating{
   padding-bottom: calc(14px + env(safe-area-inset-bottom));
 }
 
+.closed-banner{
+  margin: 10px 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid #f0d6d6;
+  background: #fff5f5;
+  color: #7a1f1f;
+  font-size: 14px;
+}
 
