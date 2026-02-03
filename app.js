@@ -11,6 +11,12 @@ const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQEcrYDzn
 
 // ====== Estado ======
 const LS_KEY = "restaurant_cart_v1";
+const DELIVERY_FEE = 4000;
+const LS_DELIVERY_MODE = "restaurant_delivery_mode_v1";     // "pickup" | "delivery"
+const LS_DELIVERY_ADDRESS = "restaurant_delivery_address_v1";
+
+let deliveryMode = loadDeliveryMode();   // pickup/delivery
+let deliveryAddress = loadDeliveryAddress();
 let DATA = { categories: [], items: [] };
 let currentCategory = null;
 let cart = loadCart();
@@ -28,6 +34,11 @@ const elCartList = document.getElementById("cartList");
 const elCartTotal = document.getElementById("cartTotal");
 const elBtnClear = document.getElementById("btnClear");
 const elBtnWA = document.getElementById("btnWhatsApp");
+// Entrega
+const elDeliveryPickup = document.getElementById("deliveryPickup");
+const elDeliveryDelivery = document.getElementById("deliveryDelivery");
+const elDeliveryAddressWrap = document.getElementById("deliveryAddressWrap");
+const elDeliveryAddress = document.getElementById("deliveryAddress");
 // Modal detalle item
 const elItemModal = document.getElementById("itemModal");
 const elCloseItem = document.getElementById("btnCloseItem");
@@ -49,6 +60,31 @@ function loadCart() {
   try { return JSON.parse(localStorage.getItem(LS_KEY)) ?? {}; }
   catch { return {}; }
 }
+function loadDeliveryMode() {
+  const v = localStorage.getItem(LS_DELIVERY_MODE);
+  return (v === "delivery" || v === "pickup") ? v : "pickup";
+}
+function saveDeliveryMode(v) {
+  localStorage.setItem(LS_DELIVERY_MODE, v);
+}
+function loadDeliveryAddress() {
+  return localStorage.getItem(LS_DELIVERY_ADDRESS) || "";
+}
+function saveDeliveryAddress(v) {
+  localStorage.setItem(LS_DELIVERY_ADDRESS, v);
+}
+
+function cartSubtotal(c) {
+  // Si ya migraste a variantes, esta función debe usar tu cartTotal actual "por key".
+  // Si NO migraste, reemplazá por la lógica antigua.
+  return cartTotal(c);
+}
+
+function orderTotal(c) {
+  const subtotal = cartSubtotal(c);
+  return subtotal + (deliveryMode === "delivery" ? DELIVERY_FEE : 0);
+}
+
 function saveCart(c) { localStorage.setItem(LS_KEY, JSON.stringify(c)); }
 function cartCount(c) { return Object.values(c).reduce((a,b)=>a+b,0); }
 function cartTotal(c) {
@@ -376,8 +412,26 @@ function renderCart() {
     });
   }
 
-  elCartTotal.textContent = money(cartTotal(cart));
-  elBtnWA.href = buildWhatsAppLink();
+ // Mostrar/ocultar address
+if (deliveryMode === "delivery") {
+  elDeliveryAddressWrap.classList.remove("hidden");
+  elDeliveryAddress.value = deliveryAddress;
+} else {
+  elDeliveryAddressWrap.classList.add("hidden");
+}
+
+// Total con envío
+elCartTotal.textContent = money(orderTotal(cart));
+elBtnWA.href = buildWhatsAppLink();
+
+// Si es delivery y no hay dirección, deshabilito WhatsApp
+const needsAddress = (deliveryMode === "delivery");
+const hasAddress = deliveryAddress.trim().length > 5;
+const canSend = entries.length > 0 && (!needsAddress || hasAddress);
+
+elBtnWA.style.pointerEvents = canSend ? "auto" : "none";
+elBtnWA.style.opacity = canSend ? "1" : "0.5";
+
   elBtnWA.style.pointerEvents = entries.length === 0 ? "none" : "auto";
   elBtnWA.style.opacity = entries.length === 0 ? "0.5" : "1";
 }
@@ -397,9 +451,28 @@ function buildWhatsAppLink() {
   lines.push(`${qty} x ${it.name}${variantLabel} — ${money(v.price * qty)}`);
 });
 
+  // Mostrar/ocultar address
+if (deliveryMode === "delivery") {
+  elDeliveryAddressWrap.classList.remove("hidden");
+  elDeliveryAddress.value = deliveryAddress;
+} else {
+  elDeliveryAddressWrap.classList.add("hidden");
+}
+
+// Total con envío
+elCartTotal.textContent = money(orderTotal(cart));
+elBtnWA.href = buildWhatsAppLink();
+
+// Si es delivery y no hay dirección, deshabilito WhatsApp
+const needsAddress = (deliveryMode === "delivery");
+const hasAddress = deliveryAddress.trim().length > 5;
+const canSend = entries.length > 0 && (!needsAddress || hasAddress);
+
+elBtnWA.style.pointerEvents = canSend ? "auto" : "none";
+elBtnWA.style.opacity = canSend ? "1" : "0.5";
 
   lines.push("");
-  lines.push(`Total: ${money(cartTotal(cart))}`);
+lines.push(`Total: ${money(orderTotal(cart))}`);
 
   const text = encodeURIComponent(lines.join("\n"));
   return `https://wa.me/${CONFIG.whatsappPhone}?text=${text}`;
@@ -439,6 +512,43 @@ async function init() {
   // ✅ modal de item (detalle/variantes)
   elCloseItem.onclick = closeItemModal;
   elItemModal.addEventListener("click", (e) => { if (e.target === elItemModal) closeItemModal(); });
+  // Inicializar radios según estado guardado
+elDeliveryPickup.checked = (deliveryMode === "pickup");
+elDeliveryDelivery.checked = (deliveryMode === "delivery");
+
+// Dirección inicial
+elDeliveryAddress.value = deliveryAddress;
+
+// Cambios de modo
+elDeliveryPickup.onchange = () => {
+  deliveryMode = "pickup";
+  saveDeliveryMode(deliveryMode);
+  renderCart(); // recalcula total + WA
+};
+
+elDeliveryDelivery.onchange = () => {
+  deliveryMode = "delivery";
+  saveDeliveryMode(deliveryMode);
+  renderCart(); // muestra input + suma envío
+};
+
+// Cambios de dirección (en vivo)
+elDeliveryAddress.addEventListener("input", () => {
+  deliveryAddress = elDeliveryAddress.value;
+  saveDeliveryAddress(deliveryAddress);
+  // solo actualiza total/whatsapp sin re-render de items
+  elCartTotal.textContent = money(orderTotal(cart));
+  elBtnWA.href = buildWhatsAppLink();
+
+  // re-aplicar habilitado/deshabilitado
+  const entries = Object.entries(cart);
+  const needsAddress = (deliveryMode === "delivery");
+  const hasAddress = deliveryAddress.trim().length > 5;
+  const canSend = entries.length > 0 && (!needsAddress || hasAddress);
+  elBtnWA.style.pointerEvents = canSend ? "auto" : "none";
+  elBtnWA.style.opacity = canSend ? "1" : "0.5";
+});
+
 }
 
 init();
