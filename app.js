@@ -207,6 +207,60 @@ function renderCategories() {
   });
 }
 
+function openItemModal(it) {
+  modalItem = it;
+
+  const firstVariant =
+    (it.variants && it.variants.length)
+      ? it.variants[0]
+      : { key: "default", name: "", price: it.price };
+
+  modalVariantKey = firstVariant.key;
+
+  elItemTitle.textContent = it.name;
+  elItemDesc.textContent = it.desc || "";
+  elItemImg.src = it.imgUrl || "";
+  elItemImg.alt = it.name;
+
+  // opciones (variantes)
+  elVariantList.innerHTML = "";
+  (it.variants || []).forEach(v => {
+    const row = document.createElement("label");
+    row.className = "variant-option";
+    row.innerHTML = `
+      <div class="variant-left">
+        <input type="radio" name="variant" value="${v.key}" ${v.key === modalVariantKey ? "checked" : ""}/>
+        <span class="variant-name">${v.name || "Opción"}</span>
+      </div>
+      <div class="variant-price">${money(v.price)}</div>
+    `;
+    row.querySelector("input").onchange = () => {
+      modalVariantKey = v.key;
+      elItemPrice.textContent = money(v.price);
+    };
+    elVariantList.appendChild(row);
+  });
+
+  elItemPrice.textContent = money(firstVariant.price);
+
+  // botón añadir
+  const soldOut = it.soldOut === true;
+  elBtnAddItem.disabled = soldOut;
+  elBtnAddItem.textContent = soldOut ? "Agotado" : "Añadir al pedido";
+  elBtnAddItem.onclick = () => {
+    if (soldOut) return;
+    addToCart(it.id, modalVariantKey);
+    closeItemModal();
+  };
+
+  elItemModal.classList.remove("hidden");
+}
+
+function closeItemModal() {
+  elItemModal.classList.add("hidden");
+  modalItem = null;
+}
+
 function renderItems() {
   elGrid.innerHTML = "";
   const items = DATA.items
