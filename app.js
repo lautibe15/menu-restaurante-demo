@@ -16,6 +16,7 @@ const CONFIG = {
 
 // Pegá acá TU link CSV publicado (de Sheets "Publicar en la web" formato CSV)
 const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQEcrYDznig15_wyrQH2pRP8hqpL3Oh50qZUMkeycGX3EImOX0oQXUabcbjdjHcZhk1bWFvoQ_fIiIZ/pub?gid=0&single=true&output=csv";
+const SETTINGS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQEcrYDznig15_wyrQH2pRP8hqpL3Oh50qZUMkeycGX3EImOX0oQXUabcbjdjHcZhk1bWFvoQ_fIiIZ/pub?gid=1846980024&single=true&output=csv";
 
 // ====== Estado ======
 const LS_KEY = "restaurant_cart_v1";
@@ -177,23 +178,30 @@ function isWithinWindow(start, end, current) {
 
 function isOrderingOpen() {
   const oh = CONFIG.orderingHours;
-  if (!oh?.enabled) return true;
+  if (!oh?.enabled) return SETTINGS.ordersEnabled !== false;
 
   const start = parseHHMM(oh.start);
   const end = parseHHMM(oh.end);
   const cur = nowMinutes(oh.tzOffsetMinutes);
 
-  return isWithinWindow(start, end, cur);
+  const inSchedule = isWithinWindow(start, end, cur);
+  const manualEnabled = (SETTINGS.ordersEnabled !== false);
+
+  return inSchedule && manualEnabled;
 }
+
 function applyOrderingState() {
   const open = isOrderingOpen();
 
   // banner
-  if (elClosedBanner) {
-    elClosedBanner.classList.toggle("hidden", open);
-    // si querés que el texto se actualice desde CONFIG:
-    elClosedBanner.innerHTML = `Estamos cerrados. Tomamos pedidos de <strong>${CONFIG.orderingHours.start} a ${CONFIG.orderingHours.end}</strong>.`;
-  }
+ if (elClosedBanner) {
+  const msg = SETTINGS.closedMessage?.trim()
+    ? SETTINGS.closedMessage.trim()
+    : `Estamos cerrados. Tomamos pedidos de ${CONFIG.orderingHours.start} a ${CONFIG.orderingHours.end}.`;
+
+  elClosedBanner.innerHTML = msg;
+  elClosedBanner.classList.toggle("hidden", isOrderingOpen());
+}
 
   // botón flotante
   if (elBtnCartFloating) {
@@ -210,6 +218,36 @@ function applyOrderingState() {
   }
 
   return open;
+}
+let SETTINGS = {
+  ordersEnabled: true,
+  closedMessage: ""
+};
+
+async function loadSettingsFromSheet() {
+  if (!SETTINGS_CSV_URL || SETTINGS_CSV_URL.includes("PEGAR_AQUI")) {
+    return { ordersEnabled: true, closedMessage: "" };
+  }
+
+  const url = SETTINGS_CSV_URL + (SETTINGS_CSV_URL.includes("?") ? "&" : "?") + "_=" + Date.now();
+  const res = await fetch(url, { cache: "no-store" });
+  const csv = await res.text();
+
+  const rows = parseCSV(csv);
+  const header = rows.shift().map(h => h.trim());
+  const idx = (name) => header.indexOf(name);
+
+  const out = { ordersEnabled: true, closedMessage: "" };
+
+  rows.forEach(r => {
+    const key = String(r[idx("key")] ?? "").trim();
+    const value = String(r[idx("value")] ?? "").trim();
+
+    if (key === "ordersEnabled") out.ordersEnabled = toBool(value, true);
+    if (key === "closedMessage") out.closedMessage = value;
+  });
+
+  return out;
 }
 
 // ====== CSV parse (soporta comillas) ======
@@ -620,15 +658,21 @@ function buildWhatsAppLink() {
 async function init() {
   elLogo.src = CONFIG.logoSrc;
   if (elNameTop) elNameTop.textContent = CONFIG.restaurantName;
-if (elName) elName.textContent = ""; // si dejaste el h1, lo vaciamos
-
+  if (elName) elName.textContent = "";
 
   try {
     DATA = await loadMenuFromSheet();
   } catch (e) {
-    elName.textContent = "Error cargando el menú (revisá SHEET_CSV_URL y el CSV publicado)";
+    if (elName) elName.textContent = "Error cargando el menú (revisá SHEET_CSV_URL y el CSV publicado)";
     console.error(e);
     return;
+  }
+
+  try {
+    SETTINGS = await loadSettingsFromSheet();
+  } catch (e) {
+    console.warn("No se pudieron cargar settings, uso default", e);
+    SETTINGS = { ordersEnabled: true, closedMessage: "" };
   }
 
   currentCategory = DATA.categories[0] ?? "Menú";
@@ -639,6 +683,8 @@ if (elName) elName.textContent = ""; // si dejaste el h1, lo vaciamos
 
   // carrito
   elBtnCart.onclick = openCart;
+  if (elBtnCartFloating) elBtnCartFloating.onclick = openCart;
+
   elClose.onclick = closeCart;
   elModal.addEventListener("click", (e) => { if (e.target === elModal) closeCart(); });
 
@@ -649,56 +695,44 @@ if (elName) elName.textContent = ""; // si dejaste el h1, lo vaciamos
     updateTop();
   };
 
-  // ✅ modal de item (detalle/variantes)
+  // modal de item
   elCloseItem.onclick = closeItemModal;
   elItemModal.addEventListener("click", (e) => { if (e.target === elItemModal) closeItemModal(); });
-  // Inicializar radios según estado guardado
-elDeliveryPickup.checked = (deliveryMode === "pickup");
-elDeliveryDelivery.checked = (deliveryMode === "delivery");
 
-// Dirección inicial
-elDeliveryAddress.value = deliveryAddress;
+  // delivery radios + dirección
+  elDeliveryPickup.checked = (deliveryMode === "pickup");
+  elDeliveryDelivery.checked = (deliveryMode === "delivery");
+  elDeliveryAddress.value = deliveryAddress;
 
-// Cambios de modo
-elDeliveryPickup.onchange = () => {
-  deliveryMode = "pickup";
-  saveDeliveryMode(deliveryMode);
-  renderCart(); // recalcula total + WA
-};
+  elDeliveryPickup.onchange = () => {
+    deliveryMode = "pickup";
+    saveDeliveryMode(deliveryMode);
+    renderCart();
+  };
 
-elDeliveryDelivery.onchange = () => {
-  deliveryMode = "delivery";
-  saveDeliveryMode(deliveryMode);
-  renderCart(); // muestra input + suma envío
-};
+  elDeliveryDelivery.onchange = () => {
+    deliveryMode = "delivery";
+    saveDeliveryMode(deliveryMode);
+    renderCart();
+  };
 
-// Cambios de dirección (en vivo)
-elDeliveryAddress.addEventListener("input", () => {
-  deliveryAddress = elDeliveryAddress.value;
-  saveDeliveryAddress(deliveryAddress);
-  // solo actualiza total/whatsapp sin re-render de items
-  elCartTotal.textContent = money(orderTotal(cart));
-  elBtnWA.href = buildWhatsAppLink();
+  elDeliveryAddress.addEventListener("input", () => {
+    deliveryAddress = elDeliveryAddress.value;
+    saveDeliveryAddress(deliveryAddress);
 
-  
-  // re-aplicar habilitado/deshabilitado
-  const entries = Object.entries(cart);
-  const needsAddress = (deliveryMode === "delivery");
-  const hasAddress = deliveryAddress.trim().length > 5;
-  const canSend = entries.length > 0 && (!needsAddress || hasAddress);
-  elBtnWA.style.pointerEvents = canSend ? "auto" : "none";
-  elBtnWA.style.opacity = canSend ? "1" : "0.5";
-});
+    // si el carrito está abierto, refresca para recalcular habilitación y WA
+    if (elModal && !elModal.classList.contains("hidden")) renderCart();
+  });
 
-elBtnCart.onclick = openCart; // si decidís mantener el botón chico
-if (elBtnCartFloating) elBtnCartFloating.onclick = openCart;
-
-}
-applyOrderingState();
-setInterval(() => {
+  // ✅ Aplicar estado abierto/cerrado apenas inicia
   applyOrderingState();
-  // si está abierto y el carrito está abierto, actualiza el link WA por si cambia habilitado
-  if (elModal && !elModal.classList.contains("hidden")) renderCart();
-}, 30000); // cada 30s
+
+  // ✅ Refrescar cada 30s (o 60s si preferís)
+  setInterval(() => {
+    applyOrderingState();
+    if (elModal && !elModal.classList.contains("hidden")) renderCart();
+  }, 30000);
+}
 
 init();
+
