@@ -51,6 +51,8 @@ const elBtnAddItem = document.getElementById("btnAddItem");
 const elBtnItemMinus = document.getElementById("btnItemMinus");
 const elBtnItemPlus  = document.getElementById("btnItemPlus");
 const elItemQty      = document.getElementById("itemQty");
+const elBtnCartFloating = document.getElementById("btnCartFloating");
+const elCartCountFloating = document.getElementById("cartCountFloating");
 
 let modalItem = null;
 let modalVariantKey = "default";
@@ -236,8 +238,21 @@ async function loadMenuFromSheet() {
 
 // ====== UI ======
 function updateTop() {
-  elCartCount.textContent = cartCount(cart);
+  const n = cartCount(cart);
+
+  // contador original
+  elCartCount.textContent = n;
+
+  // contador flotante
+  if (elCartCountFloating) elCartCountFloating.textContent = n;
+
+  // mostrar/ocultar botón flotante
+  if (elBtnCartFloating) {
+    if (n > 0) elBtnCartFloating.classList.remove("hidden");
+    else elBtnCartFloating.classList.add("hidden");
+  }
 }
+
 
 function renderCategories() {
   elBar.innerHTML = "";
@@ -576,6 +591,7 @@ elDeliveryAddress.addEventListener("input", () => {
   elCartTotal.textContent = money(orderTotal(cart));
   elBtnWA.href = buildWhatsAppLink();
 
+  
   // re-aplicar habilitado/deshabilitado
   const entries = Object.entries(cart);
   const needsAddress = (deliveryMode === "delivery");
@@ -584,6 +600,9 @@ elDeliveryAddress.addEventListener("input", () => {
   elBtnWA.style.pointerEvents = canSend ? "auto" : "none";
   elBtnWA.style.opacity = canSend ? "1" : "0.5";
 });
+
+elBtnCart.onclick = openCart; // si decidís mantener el botón chico
+if (elBtnCartFloating) elBtnCartFloating.onclick = openCart;
 
 }
 
