@@ -23,6 +23,7 @@
     <section id="itemsGrid" class="grid"></section>
   </main>
 
+  <!-- Modal carrito -->
   <div id="cartModal" class="modal hidden" role="dialog" aria-modal="true">
     <div class="modal-card">
       <div class="modal-header">
@@ -31,43 +32,40 @@
       </div>
 
       <div id="cartList" class="cart-list"></div>
-      
-<!-- Opciones de entrega -->
-<div class="delivery-box">
-  <h3 class="delivery-title">Opciones de entrega</h3>
 
-  <label class="delivery-option">
-    <input type="radio" name="deliveryMode" value="pickup" id="deliveryPickup" checked>
-    <span>Retiro en el local</span>
-  </label>
+      <!-- Opciones de entrega -->
+      <div class="delivery-box">
+        <h3 class="delivery-title">Opciones de entrega</h3>
 
-  <label class="delivery-option">
-    <input type="radio" name="deliveryMode" value="delivery" id="deliveryDelivery">
-    <span>Envío a domicilio</span>
-  </label>
+        <label class="delivery-option">
+          <input type="radio" name="deliveryMode" value="pickup" id="deliveryPickup" checked>
+          <span>Retiro en el local</span>
+        </label>
 
-  <div id="deliveryAddressWrap" class="delivery-address hidden">
-    <label for="deliveryAddress" class="delivery-label">Dirección</label>
-    <input id="deliveryAddress" class="delivery-input" type="text" placeholder="Ej: Calle 123, Barrio, Piso/Dpto" />
-    <p class="delivery-hint">Costo de envío: <strong>$4000</strong></p>
-  </div>
-</div>
+        <label class="delivery-option">
+          <input type="radio" name="deliveryMode" value="delivery" id="deliveryDelivery">
+          <span>Envío a domicilio</span>
+        </label>
+
+        <div id="deliveryAddressWrap" class="delivery-address hidden">
+          <label for="deliveryAddress" class="delivery-label">Dirección</label>
+          <input id="deliveryAddress" class="delivery-input" type="text" placeholder="Ej: Calle 123, Barrio, Piso/Dpto" />
+          <p class="delivery-hint">Costo de envío: <strong>$4000</strong></p>
+        </div>
+      </div>
 
       <div class="modal-footer">
-  <div class="total">Precio: <strong id="itemPrice"></strong></div>
-
-  <div class="item-qty">
-    <button id="btnItemMinus" class="btn" aria-label="Restar">−</button>
-    <strong id="itemQty">1</strong>
-    <button id="btnItemPlus" class="btn" aria-label="Sumar">+</button>
-  </div>
-
-  <button id="btnAddItem" class="btn btn-primary">Añadir al pedido</button>
-</div>
-
+        <div class="total">Total: <strong id="cartTotal"></strong></div>
+        <div class="modal-actions">
+          <button id="btnClear" class="btn btn-ghost">Vaciar</button>
+          <a id="btnWhatsApp" class="btn btn-whatsapp" href="#" target="_blank" rel="noreferrer">
+            Enviar por WhatsApp
+          </a>
+        </div>
+      </div>
     </div>
   </div>
-  
+
   <!-- Modal detalle de item -->
   <div id="itemModal" class="modal hidden" role="dialog" aria-modal="true">
     <div class="modal-card">
@@ -79,13 +77,23 @@
       <div class="item-body">
         <img id="itemImg" class="item-img" alt="" />
         <p id="itemDesc" class="item-desc"></p>
+
         <div id="variantList" class="variant-list"></div>
       </div>
 
       <div class="modal-footer">
         <div class="total">Precio: <strong id="itemPrice"></strong></div>
-        <button id="btnAddItem" class="btn btn-primary">Añadir al pedido</button>
 
+        <div class="item-qty">
+          <button id="btnItemMinus" class="btn" aria-label="Restar">−</button>
+          <strong id="itemQty">1</strong>
+          <button id="btnItemPlus" class="btn" aria-label="Sumar">+</button>
+        </div>
+
+        <button id="btnAddItem" class="btn btn-primary">Añadir al pedido</button>
+      </div>
+    </div>
+  </div>
   <script src="app.js"></script>
 </body>
 </html>
