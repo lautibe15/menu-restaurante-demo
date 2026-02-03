@@ -65,33 +65,27 @@
     </div>
   </div>
   
-<!-- Modal detalle de item -->
-<div id="itemModal" class="modal hidden" role="dialog" aria-modal="true">
-  <div class="modal-card">
-    <div class="modal-header">
-      <h2 id="itemTitle">Detalle</h2>
-      <button id="btnCloseItem" class="btn btn-ghost">Cerrar</button>
-    </div>
+  <!-- Modal detalle de item -->
+  <div id="itemModal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="itemTitle">Detalle</h2>
+        <button id="btnCloseItem" class="btn btn-ghost">Cerrar</button>
+      </div>
 
-    <div class="item-body">
-      <img id="itemImg" class="item-img" alt="" />
-      <p id="itemDesc" class="item-desc"></p>
+      <div class="item-body">
+        <img id="itemImg" class="item-img" alt="" />
+        <p id="itemDesc" class="item-desc"></p>
+        <div id="variantList" class="variant-list"></div>
+      </div>
 
-      <div id="variantList" class="variant-list"></div>
-    </div>
-
-    <div class="modal-footer">
-      <div class="total">Precio: <strong id="itemPrice"></strong></div>
-      <button id="btnAddItem" class="btn btn-primary">Añadir al pedido</button>
+      <div class="modal-footer">
+        <div class="total">Precio: <strong id="itemPrice"></strong></div>
+        <button id="btnAddItem" class="btn btn-primary">Añadir al pedido</button>
+      </div>
     </div>
   </div>
-</div>
 
   <script src="app.js"></script>
-
-    </div>
-  </div>
-</div>
-
 </body>
 </html>
