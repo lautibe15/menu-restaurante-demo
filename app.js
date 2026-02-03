@@ -1,6 +1,6 @@
 // ====== CONFIG ======
 const CONFIG = {
-  restaurantName: "BIG LAUTA",
+  restaurantName: "PRUEBA",
   currencySymbol: "$",
   whatsappPhone: "5493517520425", // <-- cambialo
   logoSrc: "assets/logo.png"
