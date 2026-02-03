@@ -29,6 +29,14 @@ let deliveryAddress = loadDeliveryAddress();
 let DATA = { categories: [], items: [] };
 let currentCategory = null;
 let cart = loadCart();
+let searchQuery = "";
+
+function normText(s) {
+  return String(s ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, ""); // quita acentos
+}
 
 // ====== DOM ======
 const elLogo = document.getElementById("logo");
@@ -64,6 +72,9 @@ const elBtnCartFloating = document.getElementById("btnCartFloating");
 const elCartCountFloating = document.getElementById("cartCountFloating");
 const elNameTop = document.getElementById("restaurantNameTop");
 const elClosedBanner = document.getElementById("closedBanner");
+const elSearch = document.getElementById("searchInput");
+const elClearSearch = document.getElementById("btnClearSearch");
+const elSearchMeta = document.getElementById("searchMeta");
 
 
 let modalItem = null;
@@ -485,11 +496,35 @@ function closeItemModal() {
 
 function renderItems() {
   elGrid.innerHTML = "";
-  const items = DATA.items
-    .filter(i => i.category === currentCategory)
+
+  const q = normText(searchQuery.trim());
+
+  let items = DATA.items
+    .filter(i => !searchQuery.trim() ? (i.category === currentCategory) : true)
     .filter(i => i.visible !== false)
     .filter(isInDateWindow)
+    .filter(i => {
+      if (!q) return true;
+      const hay = normText(`${i.name} ${i.desc || ""}`);
+      return hay.includes(q);
+    })
     .sort((a,b) => (a.sort ?? 999) - (b.sort ?? 999));
+
+  // meta (contador de resultados)
+  if (elSearchMeta) {
+    if (q) {
+      elSearchMeta.classList.remove("hidden");
+      elSearchMeta.textContent = `${items.length} resultado(s) para “${searchQuery.trim()}”`;
+    } else {
+      elSearchMeta.classList.add("hidden");
+      elSearchMeta.textContent = "";
+    }
+  }
+
+  if (items.length === 0) {
+    elGrid.innerHTML = `<p style="padding:12px;color:#444">No hay resultados.</p>`;
+    return;
+  }
 
   items.forEach(it => {
     const soldOut = it.soldOut === true;
@@ -516,16 +551,14 @@ function renderItems() {
       </div>
     `;
 
-    // click en tarjeta abre detalle
     card.onclick = () => openItemModal(it);
-
-    // click en botón también abre, sin “doble click”
     const btn = card.querySelector("button");
     btn.onclick = (e) => { e.stopPropagation(); if (!soldOut) openItemModal(it); };
 
     elGrid.appendChild(card);
   });
 }
+
 
 function addToCart(itemId, variantKey = "default", qty = 1) {
   const key = makeCartKey(itemId, variantKey);
@@ -680,6 +713,24 @@ async function init() {
   renderCategories();
   renderItems();
   updateTop();
+  // búsqueda
+if (elSearch) {
+  elSearch.addEventListener("input", () => {
+    searchQuery = elSearch.value;
+    if (elClearSearch) elClearSearch.classList.toggle("hidden", searchQuery.trim() === "");
+    renderItems();
+  });
+}
+
+if (elClearSearch && elSearch) {
+  elClearSearch.onclick = () => {
+    elSearch.value = "";
+    searchQuery = "";
+    elClearSearch.classList.add("hidden");
+    renderItems();
+  };
+}
+
 
   // carrito
   elBtnCart.onclick = openCart;
