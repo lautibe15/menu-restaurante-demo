@@ -53,6 +53,8 @@ const elBtnItemPlus  = document.getElementById("btnItemPlus");
 const elItemQty      = document.getElementById("itemQty");
 const elBtnCartFloating = document.getElementById("btnCartFloating");
 const elCartCountFloating = document.getElementById("cartCountFloating");
+const elNameTop = document.getElementById("restaurantNameTop");
+
 
 let modalItem = null;
 let modalVariantKey = "default";
@@ -532,7 +534,9 @@ function buildWhatsAppLink() {
 // ====== INIT ======
 async function init() {
   elLogo.src = CONFIG.logoSrc;
-  elName.textContent = CONFIG.restaurantName;
+  if (elNameTop) elNameTop.textContent = CONFIG.restaurantName;
+if (elName) elName.textContent = ""; // si dejaste el h1, lo vaciamos
+
 
   try {
     DATA = await loadMenuFromSheet();
