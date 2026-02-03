@@ -270,18 +270,25 @@ function renderCart() {
     elCartList.innerHTML = `<p>Tu carrito está vacío.</p>`;
   } else {
     entries.forEach(([key, qty]) => {
-  const { itemId, variantKey } = parseCartKey(key);
-  const it = DATA.items.find(x => x.id === itemId);
-  if (!it) return;
-  const v = getVariant(it, variantKey);
-  const variantLabel = v.name ? ` (${v.name})` : "";
+      // key = "pz-1__v1" por ejemplo
+      const { itemId, variantKey } = parseCartKey(key);
+
+      // buscar el item original
+      const it = DATA.items.find(x => x.id === itemId);
+      if (!it) return;
+
+      // buscar la variante elegida
+      const v = getVariant(it, variantKey);
+
+      // etiqueta de variante para mostrar
+      const variantLabel = v.name ? ` (${v.name})` : "";
 
       const row = document.createElement("div");
       row.className = "cart-item";
       row.innerHTML = `
         <div class="cart-left">
-          <div class="cart-name">${it.name}</div>
-          <div class="cart-sub">${qty} x ${money(it.price)} = <strong>${money(it.price * qty)}</strong></div>
+          <div class="cart-name">${it.name}${variantLabel}</div>
+          <div class="cart-sub">${qty} x ${money(v.price)} = <strong>${money(v.price * qty)}</strong></div>
         </div>
         <div class="qty">
           <button class="btn" aria-label="Restar">−</button>
@@ -294,10 +301,18 @@ function renderCart() {
       const btnMinus = buttons[0];
       const btnPlus = buttons[1];
 
-      btnPlus.onclick = () => { cart[id] = qty + 1; saveCart(cart); renderCart(); updateTop(); };
+      // + y - ahora trabajan con "key", no con "id"
+      btnPlus.onclick = () => {
+        cart[key] = qty + 1;
+        saveCart(cart);
+        renderCart();
+        updateTop();
+      };
+
       btnMinus.onclick = () => {
-        if (qty <= 1) delete cart[id];
-        else cart[id] = qty - 1;
+        if (qty <= 1) delete cart[key];
+        else cart[key] = qty - 1;
+
         saveCart(cart);
         renderCart();
         updateTop();
@@ -313,16 +328,21 @@ function renderCart() {
   elBtnWA.style.opacity = entries.length === 0 ? "0.5" : "1";
 }
 
+
 function buildWhatsAppLink() {
   const lines = [];
   lines.push(`Hola! Quiero hacer este pedido en ${CONFIG.restaurantName}:`);
   lines.push("");
 
-  Object.entries(cart).forEach(([id, qty]) => {
-    const it = DATA.items.find(x => x.id === id);
-    if (!it) return;
-    lines.push(`${qty} x ${it.name} — ${money(it.price * qty)}`);
-  });
+  Object.entries(cart).forEach(([key, qty]) => {
+  const { itemId, variantKey } = parseCartKey(key);
+  const it = DATA.items.find(x => x.id === itemId);
+  if (!it) return;
+  const v = getVariant(it, variantKey);
+  const variantLabel = v.name ? ` (${v.name})` : "";
+  lines.push(`${qty} x ${it.name}${variantLabel} — ${money(v.price * qty)}`);
+});
+
 
   lines.push("");
   lines.push(`Total: ${money(cartTotal(cart))}`);
@@ -409,4 +429,6 @@ function closeItemModal() {
   modalItem = null;
 }
 
-init();
+init(elCloseItem.onclick = closeItemModal;
+elItemModal.addEventListener("click", (e) => { if (e.target === elItemModal) closeItemModal(); });
+);
