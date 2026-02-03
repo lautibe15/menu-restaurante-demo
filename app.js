@@ -510,7 +510,7 @@ function renderItems() {
       const hay = normText(`${i.name} ${i.desc || ""}`);
       return hay.includes(q);
     })
-    ..sort((a,b) => {
+    .sort((a,b) => {
   if (isSearching && a.category !== b.category) return a.category.localeCompare(b.category);
   return (a.sort ?? 999) - (b.sort ?? 999);
 });
