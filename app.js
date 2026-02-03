@@ -61,6 +61,7 @@ const elItemQty      = document.getElementById("itemQty");
 const elBtnCartFloating = document.getElementById("btnCartFloating");
 const elCartCountFloating = document.getElementById("cartCountFloating");
 const elNameTop = document.getElementById("restaurantNameTop");
+const elClosedBanner = document.getElementById("closedBanner");
 
 
 let modalItem = null;
@@ -182,6 +183,32 @@ function isOrderingOpen() {
   const cur = nowMinutes(oh.tzOffsetMinutes);
 
   return isWithinWindow(start, end, cur);
+}
+function applyOrderingState() {
+  const open = isOrderingOpen();
+
+  // banner
+  if (elClosedBanner) {
+    elClosedBanner.classList.toggle("hidden", open);
+    // si querés que el texto se actualice desde CONFIG:
+    elClosedBanner.innerHTML = `Estamos cerrados. Tomamos pedidos de <strong>${CONFIG.orderingHours.start} a ${CONFIG.orderingHours.end}</strong>.`;
+  }
+
+  // botón flotante
+  if (elBtnCartFloating) {
+    // si está cerrado, lo ocultamos (aunque haya items)
+    if (!open) elBtnCartFloating.classList.add("hidden");
+  }
+
+  // botón WhatsApp (en carrito)
+  if (elBtnWA) {
+    if (!open) {
+      elBtnWA.style.pointerEvents = "none";
+      elBtnWA.style.opacity = "0.5";
+    }
+  }
+
+  return open;
 }
 
 // ====== CSV parse (soporta comillas) ======
@@ -392,12 +419,18 @@ function openItemModal(it) {
   const soldOut = it.soldOut === true;
   elBtnAddItem.disabled = soldOut;
   elBtnAddItem.textContent = soldOut ? "Agotado" : "Añadir al pedido";
+  const open = isOrderingOpen();
+elBtnAddItem.disabled = soldOut || !open;
+if (!open) elBtnAddItem.textContent = "Fuera de horario";
+else elBtnAddItem.textContent = soldOut ? "Agotado" : "Añadir al pedido";
 
   elBtnAddItem.onclick = () => {
-    if (soldOut) return;
-    addToCart(it.id, modalVariantKey, modalQty);
-    closeItemModal();
-  };
+  if (soldOut) return;
+  if (!isOrderingOpen()) return; // doble seguridad
+  addToCart(it.id, modalVariantKey, modalQty);
+  closeItemModal();
+};
+
 
    elItemModal.classList.remove("hidden");
   syncModalOpenClass();
@@ -485,9 +518,11 @@ function renderCart() {
       const { itemId, variantKey } = parseCartKey(key);
       const it = DATA.items.find(x => x.id === itemId);
       if (!it) return;
-
+  
       const v = getVariant(it, variantKey);
       const variantLabel = v.name ? ` (${v.name})` : "";
+      const open = isOrderingOpen();
+const canSend = open && entries.length > 0 && (!needsAddress || hasAddress);
 
       const row = document.createElement("div");
       row.className = "cart-item";
@@ -659,5 +694,11 @@ elBtnCart.onclick = openCart; // si decidís mantener el botón chico
 if (elBtnCartFloating) elBtnCartFloating.onclick = openCart;
 
 }
+applyOrderingState();
+setInterval(() => {
+  applyOrderingState();
+  // si está abierto y el carrito está abierto, actualiza el link WA por si cambia habilitado
+  if (elModal && !elModal.classList.contains("hidden")) renderCart();
+}, 30000); // cada 30s
 
 init();
