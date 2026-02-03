@@ -2,17 +2,18 @@
 const CONFIG = {
   restaurantName: "PRUEBA",
   currencySymbol: "$",
-  whatsappPhone: "5493517520425", // <-- cambialo
-  logoSrc: "assets/logo.png"
-};
-// Horario de pedidos (24h)
+  whatsappPhone: "5493517520425",
+  logoSrc: "assets/logo.png",
+
+  // Horario de pedidos (24h)
   orderingHours: {
     enabled: true,
-    tzOffsetMinutes: null, // null = usar hora del dispositivo. Ej: -180 para Argentina (GMT-3)
+    tzOffsetMinutes: null, // null = usa hora del dispositivo. Ej: -180 para Argentina (GMT-3)
     start: "11:00",
     end: "23:00"
   }
 };
+
 // Pegá acá TU link CSV publicado (de Sheets "Publicar en la web" formato CSV)
 const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQEcrYDznig15_wyrQH2pRP8hqpL3Oh50qZUMkeycGX3EImOX0oQXUabcbjdjHcZhk1bWFvoQ_fIiIZ/pub?gid=0&single=true&output=csv";
 
@@ -521,8 +522,6 @@ function renderCart() {
   
       const v = getVariant(it, variantKey);
       const variantLabel = v.name ? ` (${v.name})` : "";
-      const open = isOrderingOpen();
-const canSend = open && entries.length > 0 && (!needsAddress || hasAddress);
 
       const row = document.createElement("div");
       row.className = "cart-item";
@@ -575,7 +574,8 @@ const canSend = open && entries.length > 0 && (!needsAddress || hasAddress);
   // Validación: si es delivery, exigir dirección
   const needsAddress = (deliveryMode === "delivery");
   const hasAddress = (deliveryAddress || "").trim().length > 5;
-  const canSend = entries.length > 0 && (!needsAddress || hasAddress);
+  const open = isOrderingOpen();
+const canSend = open && entries.length > 0 && (!needsAddress || hasAddress);
 
   elBtnWA.style.pointerEvents = canSend ? "auto" : "none";
   elBtnWA.style.opacity = canSend ? "1" : "0.5";
