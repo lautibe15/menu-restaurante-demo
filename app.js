@@ -405,11 +405,11 @@ function renderCart() {
 
   // Mostrar/ocultar address
   if (deliveryMode === "delivery") {
-    elDeliveryAddressWrap.classList.remove("hidden");
-    elDeliveryAddress.value = deliveryAddress;
-  } else {
-    elDeliveryAddressWrap.classList.add("hidden");
-  }
+  elDeliveryAddressWrap.classList.remove("hidden");
+} else {
+  elDeliveryAddressWrap.classList.add("hidden");
+}
+
 
   // Total con envío
   elCartTotal.textContent = money(orderTotal(cart));
