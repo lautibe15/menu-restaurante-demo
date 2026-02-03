@@ -442,22 +442,42 @@ function buildWhatsAppLink() {
   lines.push(`Hola! Quiero hacer este pedido en ${CONFIG.restaurantName}:`);
   lines.push("");
 
+  // Carrito con variantes: key = "pz-1__v2"
   Object.entries(cart).forEach(([key, qty]) => {
-  const { itemId, variantKey } = parseCartKey(key);
-  const it = DATA.items.find(x => x.id === itemId);
-  if (!it) return;
-  const v = getVariant(it, variantKey);
-  const variantLabel = v.name ? ` (${v.name})` : "";
-  lines.push(`${qty} x ${it.name}${variantLabel} — ${money(v.price * qty)}`);
-});
+    const { itemId, variantKey } = parseCartKey(key);
+    const it = DATA.items.find(x => x.id === itemId);
+    if (!it) return;
 
-  // Mostrar/ocultar address
-if (deliveryMode === "delivery") {
-  elDeliveryAddressWrap.classList.remove("hidden");
-  elDeliveryAddress.value = deliveryAddress;
-} else {
-  elDeliveryAddressWrap.classList.add("hidden");
+    const v = getVariant(it, variantKey);
+    const variantLabel = v.name ? ` (${v.name})` : "";
+    lines.push(`${qty} x ${it.name}${variantLabel} — ${money(v.price * qty)}`);
+  });
+
+  lines.push("");
+
+  // Si todavía no agregaste la parte de delivery, podés borrar este bloque.
+  if (typeof deliveryMode !== "undefined") {
+    lines.push("Opciones de entrega:");
+    if (deliveryMode === "delivery") {
+      lines.push("• Envío a domicilio");
+      lines.push(`• Dirección: ${(deliveryAddress || "").trim() || "(sin dirección)"}`);
+      if (typeof DELIVERY_FEE !== "undefined") {
+        lines.push(`• Costo de envío: ${money(DELIVERY_FEE)}`);
+      }
+    } else {
+      lines.push("• Retiro en el local");
+    }
+    lines.push("");
+  }
+
+  // Total (usa tu función existente; si no existe orderTotal, usa cartTotal)
+  const totalFinal = (typeof orderTotal === "function") ? orderTotal(cart) : cartTotal(cart);
+  lines.push(`Total: ${money(totalFinal)}`);
+
+  const text = encodeURIComponent(lines.join("\n"));
+  return `https://wa.me/${CONFIG.whatsappPhone}?text=${text}`;
 }
+
 
 // Total con envío
 elCartTotal.textContent = money(orderTotal(cart));
