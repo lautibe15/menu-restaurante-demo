@@ -31,6 +31,27 @@
       </div>
 
       <div id="cartList" class="cart-list"></div>
+      
+<!-- Opciones de entrega -->
+<div class="delivery-box">
+  <h3 class="delivery-title">Opciones de entrega</h3>
+
+  <label class="delivery-option">
+    <input type="radio" name="deliveryMode" value="pickup" id="deliveryPickup" checked>
+    <span>Retiro en el local</span>
+  </label>
+
+  <label class="delivery-option">
+    <input type="radio" name="deliveryMode" value="delivery" id="deliveryDelivery">
+    <span>Envío a domicilio</span>
+  </label>
+
+  <div id="deliveryAddressWrap" class="delivery-address hidden">
+    <label for="deliveryAddress" class="delivery-label">Dirección</label>
+    <input id="deliveryAddress" class="delivery-input" type="text" placeholder="Ej: Calle 123, Barrio, Piso/Dpto" />
+    <p class="delivery-hint">Costo de envío: <strong>$4000</strong></p>
+  </div>
+</div>
 
       <div class="modal-footer">
         <div class="total">Total: <strong id="cartTotal"></strong></div>
