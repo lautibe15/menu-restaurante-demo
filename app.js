@@ -52,9 +52,6 @@ const elBtnItemMinus = document.getElementById("btnItemMinus");
 const elBtnItemPlus  = document.getElementById("btnItemPlus");
 const elItemQty      = document.getElementById("itemQty");
 
-let modalQty = 1;
-
-
 let modalItem = null;
 let modalVariantKey = "default";
 let modalQty = 1;
@@ -63,6 +60,7 @@ let modalUnitPrice = 0;
 function updateItemModalPrice() {
   elItemPrice.textContent = money(modalUnitPrice * modalQty);
 }
+
 
 
 
@@ -259,39 +257,17 @@ function renderCategories() {
 function openItemModal(it) {
   modalItem = it;
 
-  const variants = it.variants && it.variants.length
+  const variants = (it.variants && it.variants.length)
     ? it.variants
     : [{ key: "default", name: "", price: it.price }];
 
-  // "Variantes reales" = más de 1 opción o alguna no-default
   const hasRealVariants =
     variants.length > 1 || variants.some(v => v.key !== "default");
 
   // cantidad inicial
   modalQty = 1;
-elItemQty.textContent = "1";
-elBtnItemMinus.disabled = true;
-
-modalUnitPrice = firstVariant.price; // o it.price si no hay variantes
-updateItemModalPrice();
-
-
-
- elBtnItemPlus.onclick = () => {
-  modalQty += 1;
-  elItemQty.textContent = String(modalQty);
-  elBtnItemMinus.disabled = (modalQty <= 1);
-  updateItemModalPrice();
-};
-
-elBtnItemMinus.onclick = () => {
-  if (modalQty <= 1) return;
-  modalQty -= 1;
-  elItemQty.textContent = String(modalQty);
-  elBtnItemMinus.disabled = (modalQty <= 1);
-  updateItemModalPrice();
-};
-
+  elItemQty.textContent = "1";
+  elBtnItemMinus.disabled = true;
 
   // setup base del modal
   elItemTitle.textContent = it.name;
@@ -299,19 +275,20 @@ elBtnItemMinus.onclick = () => {
   elItemImg.src = it.imgUrl || "";
   elItemImg.alt = it.name;
 
-  // Si NO hay variantes reales, oculto selector y fijo default
+  // variantes
   if (!hasRealVariants) {
     modalVariantKey = "default";
+    modalUnitPrice = it.price;
+
     elVariantList.classList.add("hidden");
     elVariantList.innerHTML = "";
-    elItemPrice.textContent = money(it.price);
   } else {
     elVariantList.classList.remove("hidden");
     elVariantList.innerHTML = "";
 
     const firstVariant = variants[0];
     modalVariantKey = firstVariant.key;
-    elItemPrice.textContent = money(firstVariant.price);
+    modalUnitPrice = firstVariant.price;
 
     variants.forEach(v => {
       const row = document.createElement("label");
@@ -324,16 +301,34 @@ elBtnItemMinus.onclick = () => {
         <div class="variant-price">${money(v.price)}</div>
       `;
 
-     row.querySelector("input").onchange = () => {
-  modalVariantKey = v.key;
-  modalUnitPrice = v.price;
-  updateItemModalPrice();
-};
-
+      row.querySelector("input").onchange = () => {
+        modalVariantKey = v.key;
+        modalUnitPrice = v.price;
+        updateItemModalPrice();
+      };
 
       elVariantList.appendChild(row);
     });
   }
+
+  // precio inicial (unitario * qty)
+  updateItemModalPrice();
+
+  // handlers del contador (actualizan precio)
+  elBtnItemPlus.onclick = () => {
+    modalQty += 1;
+    elItemQty.textContent = String(modalQty);
+    elBtnItemMinus.disabled = (modalQty <= 1);
+    updateItemModalPrice();
+  };
+
+  elBtnItemMinus.onclick = () => {
+    if (modalQty <= 1) return;
+    modalQty -= 1;
+    elItemQty.textContent = String(modalQty);
+    elBtnItemMinus.disabled = (modalQty <= 1);
+    updateItemModalPrice();
+  };
 
   // botón añadir
   const soldOut = it.soldOut === true;
@@ -341,14 +336,14 @@ elBtnItemMinus.onclick = () => {
   elBtnAddItem.textContent = soldOut ? "Agotado" : "Añadir al pedido";
 
   elBtnAddItem.onclick = () => {
-  if (soldOut) return;
-  addToCart(it.id, modalVariantKey, modalQty);
-  closeItemModal();
-};
-
+    if (soldOut) return;
+    addToCart(it.id, modalVariantKey, modalQty);
+    closeItemModal();
+  };
 
   elItemModal.classList.remove("hidden");
 }
+
 
 
 function closeItemModal() {
