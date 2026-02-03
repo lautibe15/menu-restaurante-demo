@@ -510,7 +510,11 @@ function renderItems() {
       const hay = normText(`${i.name} ${i.desc || ""}`);
       return hay.includes(q);
     })
-    .sort((a,b) => (a.sort ?? 999) - (b.sort ?? 999));
+    ..sort((a,b) => {
+  if (isSearching && a.category !== b.category) return a.category.localeCompare(b.category);
+  return (a.sort ?? 999) - (b.sort ?? 999);
+});
+
 
   // meta (contador de resultados)
   if (elSearchMeta) {
@@ -536,13 +540,19 @@ function renderItems() {
 
     const card = document.createElement("div");
     card.className = "card";
+    const catBadge = isSearching
+  ? `<span class="badge cat">${it.category}</span>`
+  : ``;
     card.innerHTML = `
       <img src="${it.imgUrl}" alt="${it.name}" onerror="this.style.display='none'"/>
       <div class="card-body">
         <div class="card-title">
-          <span>${it.name}</span>
-          ${soldOut ? `<span class="badge soldout">Agotado</span>` : ``}
-        </div>
+  <span>${it.name}</span>
+  <div class="badges">
+    ${catBadge}
+    ${soldOut ? `<span class="badge soldout">Agotado</span>` : ``}
+  </div>
+</div>
         <div class="card-desc">${it.desc ?? ""}</div>
         <div class="card-row">
           <div class="price">${priceText}</div>
