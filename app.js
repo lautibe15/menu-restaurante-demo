@@ -28,6 +28,19 @@ const elCartList = document.getElementById("cartList");
 const elCartTotal = document.getElementById("cartTotal");
 const elBtnClear = document.getElementById("btnClear");
 const elBtnWA = document.getElementById("btnWhatsApp");
+// Modal detalle item
+const elItemModal = document.getElementById("itemModal");
+const elCloseItem = document.getElementById("btnCloseItem");
+const elItemTitle = document.getElementById("itemTitle");
+const elItemImg = document.getElementById("itemImg");
+const elItemDesc = document.getElementById("itemDesc");
+const elVariantList = document.getElementById("variantList");
+const elItemPrice = document.getElementById("itemPrice");
+const elBtnAddItem = document.getElementById("btnAddItem");
+
+let modalItem = null;
+let modalVariantKey = "default";
+
 
 // ====== Helpers ======
 function money(n) { return `${CONFIG.currencySymbol}${Math.round(n)}`; }
@@ -39,11 +52,29 @@ function loadCart() {
 function saveCart(c) { localStorage.setItem(LS_KEY, JSON.stringify(c)); }
 function cartCount(c) { return Object.values(c).reduce((a,b)=>a+b,0); }
 function cartTotal(c) {
-  return Object.entries(c).reduce((sum,[id,qty]) => {
-    const it = DATA.items.find(x => x.id === id);
-    return sum + (it ? it.price * qty : 0);
+  return Object.entries(c).reduce((sum, [key, qty]) => {
+    const { itemId, variantKey } = parseCartKey(key);
+    const it = DATA.items.find(x => x.id === itemId);
+    if (!it) return sum;
+    const v = getVariant(it, variantKey);
+    return sum + (v.price * qty);
   }, 0);
 }
+
+function makeCartKey(itemId, variantKey) {
+  return `${itemId}__${variantKey || "default"}`;
+}
+
+function parseCartKey(key) {
+  const parts = String(key).split("__");
+  return { itemId: parts[0], variantKey: parts[1] || "default" };
+}
+
+function getVariant(item, variantKey) {
+  const v = (item.variants || []).find(x => x.key === variantKey);
+  return v || (item.variants?.[0]) || { key: "default", name: "", price: item.price };
+}
+
 
 function todayISO() {
   const d = new Date();
@@ -116,7 +147,8 @@ async function loadMenuFromSheet() {
 
   const idx = (name) => header.indexOf(name);
 
-  const items = rows.map(r => ({
+  const items = rows.map(r => {
+  const base = {
     id: (r[idx("id")] ?? "").trim(),
     category: (r[idx("category")] ?? "").trim(),
     name: (r[idx("name")] ?? "").trim(),
@@ -128,7 +160,25 @@ async function loadMenuFromSheet() {
     availableFrom: (r[idx("availableFrom")] ?? "").trim(),
     availableTo: (r[idx("availableTo")] ?? "").trim(),
     sort: toNum(r[idx("sort")])
-  })).filter(x => x.id && x.category && x.name);
+  };
+
+  // leer variantes desde el CSV
+  const v1Name = (r[idx("variant1Name")] ?? "").trim();
+  const v1Price = toNum(r[idx("variant1Price")]);
+  const v2Name = (r[idx("variant2Name")] ?? "").trim();
+  const v2Price = toNum(r[idx("variant2Price")]);
+
+  // construir lista de variantes
+  const variants = [];
+  if (v1Name && v1Price > 0) variants.push({ key: "v1", name: v1Name, price: v1Price });
+  if (v2Name && v2Price > 0) variants.push({ key: "v2", name: v2Name, price: v2Price });
+
+  // si no hay variantes, usar el precio base como opción default
+  if (variants.length === 0) variants.push({ key: "default", name: "", price: base.price });
+
+  return { ...base, variants };
+}).filter(x => x.id && x.category && x.name);
+
 
   // categorías en orden de aparición
   const categories = [];
@@ -168,6 +218,9 @@ function renderItems() {
   items.forEach(it => {
     const soldOut = it.soldOut === true;
 
+    const minPrice = Math.min(...(it.variants || []).map(v => v.price));
+    const priceText = (it.variants?.length > 1) ? `Desde ${money(minPrice)}` : money(minPrice);
+
     const card = document.createElement("div");
     card.className = "card";
     card.innerHTML = `
@@ -179,23 +232,32 @@ function renderItems() {
         </div>
         <div class="card-desc">${it.desc ?? ""}</div>
         <div class="card-row">
-          <div class="price">${money(it.price)}</div>
+          <div class="price">${priceText}</div>
           <button class="btn btn-primary" ${soldOut ? "disabled" : ""}>
-            ${soldOut ? "No disponible" : "Añadir"}
+            ${soldOut ? "No disponible" : "Elegir"}
           </button>
         </div>
       </div>
     `;
-    card.querySelector("button").onclick = () => { if (!soldOut) addToCart(it.id); };
+
+    // click en tarjeta abre detalle
+    card.onclick = () => openItemModal(it);
+
+    // click en botón también abre, sin “doble click”
+    const btn = card.querySelector("button");
+    btn.onclick = (e) => { e.stopPropagation(); if (!soldOut) openItemModal(it); };
+
     elGrid.appendChild(card);
   });
 }
 
-function addToCart(itemId) {
-  cart[itemId] = (cart[itemId] ?? 0) + 1;
+function addToCart(itemId, variantKey = "default") {
+  const key = makeCartKey(itemId, variantKey);
+  cart[key] = (cart[key] ?? 0) + 1;
   saveCart(cart);
   updateTop();
 }
+
 
 function openCart() { renderCart(); elModal.classList.remove("hidden"); }
 function closeCart() { elModal.classList.add("hidden"); }
@@ -207,9 +269,12 @@ function renderCart() {
   if (entries.length === 0) {
     elCartList.innerHTML = `<p>Tu carrito está vacío.</p>`;
   } else {
-    entries.forEach(([id, qty]) => {
-      const it = DATA.items.find(x => x.id === id);
-      if (!it) return;
+    entries.forEach(([key, qty]) => {
+  const { itemId, variantKey } = parseCartKey(key);
+  const it = DATA.items.find(x => x.id === itemId);
+  if (!it) return;
+  const v = getVariant(it, variantKey);
+  const variantLabel = v.name ? ` (${v.name})` : "";
 
       const row = document.createElement("div");
       row.className = "cart-item";
@@ -296,4 +361,52 @@ async function init() {
     updateTop();
   };
 }
+function openItemModal(it) {
+  modalItem = it;
+  const firstVariant = (it.variants && it.variants.length) ? it.variants[0] : { key:"default", name:"", price: it.price };
+  modalVariantKey = firstVariant.key;
+
+  elItemTitle.textContent = it.name;
+  elItemDesc.textContent = it.desc || "";
+  elItemImg.src = it.imgUrl || "";
+  elItemImg.alt = it.name;
+
+  // armar radios de variantes
+  elVariantList.innerHTML = "";
+  it.variants.forEach(v => {
+    const row = document.createElement("label");
+    row.className = "variant-option";
+    row.innerHTML = `
+      <div class="variant-left">
+        <input type="radio" name="variant" value="${v.key}" ${v.key === modalVariantKey ? "checked" : ""}/>
+        <span class="variant-name">${v.name || "Opción"}</span>
+      </div>
+      <div class="variant-price">${money(v.price)}</div>
+    `;
+    row.querySelector("input").onchange = () => {
+      modalVariantKey = v.key;
+      elItemPrice.textContent = money(v.price);
+    };
+    elVariantList.appendChild(row);
+  });
+
+  elItemPrice.textContent = money(firstVariant.price);
+
+  // botón añadir
+  elBtnAddItem.disabled = (it.soldOut === true);
+  elBtnAddItem.textContent = (it.soldOut === true) ? "Agotado" : "Añadir al pedido";
+  elBtnAddItem.onclick = () => {
+    if (it.soldOut === true) return;
+    addToCart(it.id, modalVariantKey);
+    closeItemModal();
+  };
+
+  elItemModal.classList.remove("hidden");
+}
+
+function closeItemModal() {
+  elItemModal.classList.add("hidden");
+  modalItem = null;
+}
+
 init();
