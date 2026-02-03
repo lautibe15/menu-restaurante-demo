@@ -24,9 +24,17 @@
 </div>
 
   <main class="container">
-    <nav id="categoryBar" class="categories"></nav>
-    <section id="itemsGrid" class="grid"></section>
-  </main>
+
+  <div class="searchbar">
+    <input id="searchInput" type="search" placeholder="Buscar en el menú…" autocomplete="off" />
+    <button id="btnClearSearch" class="search-clear hidden" type="button" aria-label="Limpiar búsqueda">×</button>
+  </div>
+  <div id="searchMeta" class="search-meta hidden"></div>
+
+  <nav id="categoryBar" class="categories"></nav>
+  <section id="itemsGrid" class="grid"></section>
+</main>
+
 
   <!-- Modal carrito -->
   <div id="cartModal" class="modal hidden" role="dialog" aria-modal="true">
