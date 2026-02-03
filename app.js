@@ -253,6 +253,8 @@ function updateTop() {
     if (n > 0) elBtnCartFloating.classList.remove("hidden");
     else elBtnCartFloating.classList.add("hidden");
   }
+  // ✅ Esto hace que el contenido “suba” cuando aparece el botón
+  document.body.classList.toggle("has-fab", n > 0);
 }
 
 
@@ -358,14 +360,16 @@ function openItemModal(it) {
     closeItemModal();
   };
 
-  elItemModal.classList.remove("hidden");
+   elItemModal.classList.remove("hidden");
+  syncModalOpenClass();
 }
 
 
 
 function closeItemModal() {
-  elItemModal.classList.add("hidden");
+   elItemModal.classList.add("hidden");
   modalItem = null;
+  syncModalOpenClass();
 }
 
 function renderItems() {
@@ -421,8 +425,15 @@ function addToCart(itemId, variantKey = "default", qty = 1) {
 
 
 
-function openCart() { renderCart(); elModal.classList.remove("hidden"); }
-function closeCart() { elModal.classList.add("hidden"); }
+function openCart() { renderCart(); elModal.classList.remove("hidden"); syncModalOpenClass(); }
+function closeCart() { elModal.classList.add("hidden"); syncModalOpenClass(); }
+
+function syncModalOpenClass() {
+  const cartOpen = elModal && !elModal.classList.contains("hidden");
+  const itemOpen = elItemModal && !elItemModal.classList.contains("hidden");
+  document.body.classList.toggle("modal-open", cartOpen || itemOpen);
+}
+
 
 function renderCart() {
   elCartList.innerHTML = "";
