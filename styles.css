@@ -178,4 +178,28 @@ main{ padding-bottom: 90px; }
 /* Para poder ocultar la lista de variantes cuando no corresponde */
 .variant-list.hidden{ display:none; }
 #btnCart{ display:none; }
+:root{
+  --fab-h: 56px;     /* alto aprox del botón */
+  --fab-gap: 14px;   /* margen inferior */
+}
+
+/* Cuando el FAB está visible, empujamos el contenido hacia arriba */
+body.has-fab main{
+  padding-bottom: calc(var(--fab-h) + (var(--fab-gap) * 2) + env(safe-area-inset-bottom));
+  transition: padding-bottom .18s ease;
+}
+
+/* Si tu contenedor NO usa <main>, usá este selector en su lugar:
+body.has-fab .container{ padding-bottom: ... } */
+
+/* Cuando hay un modal abierto, ocultamos el botón flotante para que no tape nada */
+body.modal-open #btnCartFloating{
+  display: none !important;
+}
+
+/* Extra: que el footer del modal no quede pegado al borde inferior del celu */
+.modal-footer{
+  padding-bottom: calc(14px + env(safe-area-inset-bottom));
+}
+
 
