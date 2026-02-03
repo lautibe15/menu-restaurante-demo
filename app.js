@@ -48,6 +48,12 @@ const elItemDesc = document.getElementById("itemDesc");
 const elVariantList = document.getElementById("variantList");
 const elItemPrice = document.getElementById("itemPrice");
 const elBtnAddItem = document.getElementById("btnAddItem");
+const elBtnItemMinus = document.getElementById("btnItemMinus");
+const elBtnItemPlus  = document.getElementById("btnItemPlus");
+const elItemQty      = document.getElementById("itemQty");
+
+let modalQty = 1;
+
 
 let modalItem = null;
 let modalVariantKey = "default";
@@ -246,51 +252,86 @@ function renderCategories() {
 function openItemModal(it) {
   modalItem = it;
 
-  const firstVariant =
-    (it.variants && it.variants.length)
-      ? it.variants[0]
-      : { key: "default", name: "", price: it.price };
+  const variants = it.variants && it.variants.length
+    ? it.variants
+    : [{ key: "default", name: "", price: it.price }];
 
-  modalVariantKey = firstVariant.key;
+  // "Variantes reales" = más de 1 opción o alguna no-default
+  const hasRealVariants =
+    variants.length > 1 || variants.some(v => v.key !== "default");
 
+  // cantidad inicial
+  modalQty = 1;
+  elItemQty.textContent = String(modalQty);
+  elBtnItemMinus.disabled = true;
+
+  elBtnItemPlus.onclick = () => {
+    modalQty += 1;
+    elItemQty.textContent = String(modalQty);
+    elBtnItemMinus.disabled = (modalQty <= 1);
+  };
+
+  elBtnItemMinus.onclick = () => {
+    if (modalQty <= 1) return;
+    modalQty -= 1;
+    elItemQty.textContent = String(modalQty);
+    elBtnItemMinus.disabled = (modalQty <= 1);
+  };
+
+  // setup base del modal
   elItemTitle.textContent = it.name;
   elItemDesc.textContent = it.desc || "";
   elItemImg.src = it.imgUrl || "";
   elItemImg.alt = it.name;
 
-  // opciones (variantes)
-  elVariantList.innerHTML = "";
-  (it.variants || []).forEach(v => {
-    const row = document.createElement("label");
-    row.className = "variant-option";
-    row.innerHTML = `
-      <div class="variant-left">
-        <input type="radio" name="variant" value="${v.key}" ${v.key === modalVariantKey ? "checked" : ""}/>
-        <span class="variant-name">${v.name || "Opción"}</span>
-      </div>
-      <div class="variant-price">${money(v.price)}</div>
-    `;
-    row.querySelector("input").onchange = () => {
-      modalVariantKey = v.key;
-      elItemPrice.textContent = money(v.price);
-    };
-    elVariantList.appendChild(row);
-  });
+  // Si NO hay variantes reales, oculto selector y fijo default
+  if (!hasRealVariants) {
+    modalVariantKey = "default";
+    elVariantList.classList.add("hidden");
+    elVariantList.innerHTML = "";
+    elItemPrice.textContent = money(it.price);
+  } else {
+    elVariantList.classList.remove("hidden");
+    elVariantList.innerHTML = "";
 
-  elItemPrice.textContent = money(firstVariant.price);
+    const firstVariant = variants[0];
+    modalVariantKey = firstVariant.key;
+    elItemPrice.textContent = money(firstVariant.price);
+
+    variants.forEach(v => {
+      const row = document.createElement("label");
+      row.className = "variant-option";
+      row.innerHTML = `
+        <div class="variant-left">
+          <input type="radio" name="variant" value="${v.key}" ${v.key === modalVariantKey ? "checked" : ""}/>
+          <span class="variant-name">${v.name}</span>
+        </div>
+        <div class="variant-price">${money(v.price)}</div>
+      `;
+
+      row.querySelector("input").onchange = () => {
+        modalVariantKey = v.key;
+        elItemPrice.textContent = money(v.price);
+      };
+
+      elVariantList.appendChild(row);
+    });
+  }
 
   // botón añadir
   const soldOut = it.soldOut === true;
   elBtnAddItem.disabled = soldOut;
   elBtnAddItem.textContent = soldOut ? "Agotado" : "Añadir al pedido";
+
   elBtnAddItem.onclick = () => {
     if (soldOut) return;
-    addToCart(it.id, modalVariantKey);
+    addToCart(it.id, modalVariantKey, modalQty);
     closeItemModal();
   };
 
   elItemModal.classList.remove("hidden");
 }
+
 
 function closeItemModal() {
   elItemModal.classList.add("hidden");
@@ -341,12 +382,13 @@ function renderItems() {
   });
 }
 
-function addToCart(itemId, variantKey = "default") {
+function addToCart(itemId, variantKey = "default", qty = 1) {
   const key = makeCartKey(itemId, variantKey);
-  cart[key] = (cart[key] ?? 0) + 1;
+  cart[key] = (cart[key] ?? 0) + qty;
   saveCart(cart);
   updateTop();
 }
+
 
 
 function openCart() { renderCart(); elModal.classList.remove("hidden"); }
